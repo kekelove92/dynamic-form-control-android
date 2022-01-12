@@ -3,6 +3,8 @@ package jj.app.dynamicform;
 import android.os.Bundle;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -23,7 +25,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jj.app.dynamicform.models.Constants;
+import jj.app.dynamicform.models.MyControl;
+import jj.app.dynamicform.models.MyOptions;
 import jj.app.dynamicform.newmodel.Schema;
+import jj.app.dynamicform.newmodel.Value;
 
 public class DemoActivity extends AppCompatActivity {
     List<Schema> myControlList;
@@ -51,6 +56,9 @@ public class DemoActivity extends AppCompatActivity {
                         addText(data);
                     }
                     break;
+                case Constants.radio_group:
+                    addRadioButtons(data);
+                    break;
             }
         }
     }
@@ -72,6 +80,28 @@ public class DemoActivity extends AppCompatActivity {
         textTitle.setTextSize(18f);
         textTitle.setLayoutParams(getLayoutParam());
         llMain.addView(textTitle);
+    }
+
+    public void addRadioButtons(Schema schema) {
+        addCaption(schema.getLabel());
+
+        RadioGroup radioGroup = new RadioGroup(this);
+        radioGroup.setOrientation(LinearLayout.VERTICAL);
+
+        List<Value> valueList = schema.getValues();
+        for (int i = 0; i < valueList.size(); i++) {
+            Value myValue = valueList.get(i);
+            RadioButton radioButton = new RadioButton(this);
+            radioButton.setId(Integer.parseInt(myValue.getValue()));
+            radioButton.setText(myValue.getLabel());
+            if (schema.getValues().equals(myValue.getValue())) {
+                radioButton.setChecked(true);
+            }
+            radioGroup.addView(radioButton);
+        }
+        radioGroup.setLayoutParams(getLayoutParam());
+
+        llMain.addView(radioGroup);
     }
 
     private LinearLayout.LayoutParams getLayoutParam() {
