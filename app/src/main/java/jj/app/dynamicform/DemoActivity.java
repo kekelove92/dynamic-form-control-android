@@ -1,11 +1,16 @@
 package jj.app.dynamicform;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
+import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
@@ -24,15 +29,19 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import jj.app.dynamicform.components.InputTextView;
+import jj.app.dynamicform.components.RadioButtonView;
 import jj.app.dynamicform.models.Constants;
 import jj.app.dynamicform.models.MyControl;
 import jj.app.dynamicform.models.MyOptions;
 import jj.app.dynamicform.newmodel.Schema;
 import jj.app.dynamicform.newmodel.Value;
 
-public class DemoActivity extends AppCompatActivity {
+public class DemoActivity extends AppCompatActivity implements View.OnClickListener {
     List<Schema> myControlList;
     LinearLayout llMain;
+    private InputTextView inputTextView;
+    Button button;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,22 +52,47 @@ public class DemoActivity extends AppCompatActivity {
         getControls();
         prepareView();
 
+        button = findViewById(R.id.btn_next);
+        button.setOnClickListener(this);
     }
 
 
     private void prepareView() {
         for (int i = 0; i < myControlList.size(); i++) {
             Schema data = myControlList.get(i);
-            switch (data.getType()){
-
+            switch (data.getType()) {
                 case Constants.header:
-                    if (data.getNgModel() == null){
+                    if (data.getNgModel() == null) {
                         addText(data);
                     }
                     break;
                 case Constants.radio_group:
-                    addRadioButtons(data);
+                    final int index = i;
+                    final RadioButtonView radioButtonView = new RadioButtonView(this);
+                    radioButtonView.setTitle(data.getLabel());
+                    radioButtonView.setData(data.getValues());
+                    radioButtonView.setConditions(data.getName(), myControlList);
+                    radioButtonView.setOnItemSelected(new RadioButtonView.OnItemSelected() {
+                        @Override
+                        public void onSelectedItem(Schema view, String value) {
+                            if (inputTextView != null)
+                                llMain.removeView(inputTextView);
+                            inputTextView = new InputTextView(DemoActivity.this);
+                            inputTextView.setData(view);
+                            llMain.addView(inputTextView, index);
+                        }
+                    });
+
+                    llMain.addView(radioButtonView);
                     break;
+                case Constants.textarea:
+                    addTextArea(data);
+                    break;
+
+                case Constants.text:
+
+                    break;
+
             }
         }
     }
@@ -85,7 +119,7 @@ public class DemoActivity extends AppCompatActivity {
     public void addRadioButtons(Schema schema) {
         addCaption(schema.getLabel());
 
-        RadioGroup radioGroup = new RadioGroup(this);
+        final RadioGroup radioGroup = new RadioGroup(this);
         radioGroup.setOrientation(LinearLayout.VERTICAL);
 
         List<Value> valueList = schema.getValues();
@@ -97,11 +131,44 @@ public class DemoActivity extends AppCompatActivity {
             if (schema.getValues().equals(myValue.getValue())) {
                 radioButton.setChecked(true);
             }
+
             radioGroup.addView(radioButton);
         }
+
+
+        radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                RadioButton checkedRadioButton = (RadioButton) group.findViewById(checkedId);
+                boolean isChecked = checkedRadioButton.isChecked();
+                if (isChecked) {
+                    Toast.makeText(DemoActivity.this, "" + checkedRadioButton.getText(), Toast.LENGTH_SHORT).show();
+                }
+                switch (checkedId) {
+                    case 0:
+
+                        break;
+                    case 1:
+
+                        break;
+                    case 2:
+
+                        break;
+                }
+            }
+        });
         radioGroup.setLayoutParams(getLayoutParam());
 
         llMain.addView(radioGroup);
+    }
+
+    public void addTextArea(Schema schema) {
+        addCaption(schema.getLabel());
+        EditText editText = new EditText(this);
+        editText.setHint("Enter Value");
+        editText.setMaxLines(5);
+        editText.setLayoutParams(getLayoutParam());
+        llMain.addView(editText);
     }
 
     private LinearLayout.LayoutParams getLayoutParam() {
@@ -112,7 +179,7 @@ public class DemoActivity extends AppCompatActivity {
 
     private void getControls() {
         String data = readFile();
-        data = data.replace("\n  ","");
+        data = data.replace("\n  ", "");
         JSONObject jsonObj = null;
         try {
             jsonObj = new JSONObject(data);
@@ -143,5 +210,13 @@ public class DemoActivity extends AppCompatActivity {
             return null;
         }
         return json;
+    }
+
+    @SuppressLint("NonConstantResourceId")
+    @Override
+    public void onClick(View v) {
+        if (v.getId() == R.id.btn_next) {
+
+        }
     }
 }
