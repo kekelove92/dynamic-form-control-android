@@ -12,7 +12,6 @@ import android.widget.RadioGroup;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatTextView;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -28,9 +27,16 @@ public class RadioButtonView extends LinearLayout {
 
     private AppCompatTextView txtTitle;
     private RadioGroup rgOption;
+    private InputTextView inputTextView;
     private  List<Pair<Schema, String>> listCondition = new ArrayList<>();
 
+
+
+    private int checkedId = -1;
+
     private OnItemSelected onItemSelected;
+
+    private Schema schemaData;
 
     public void setOnItemSelected(OnItemSelected onItemSelected) {
         this.onItemSelected = onItemSelected;
@@ -55,13 +61,18 @@ public class RadioButtonView extends LinearLayout {
         View view = inflate(context, R.layout.view_radio_button, this);
         rgOption = view.findViewById(R.id.rgOption);
         txtTitle = view.findViewById(R.id.txtTitle);
+        inputTextView = view.findViewById(R.id.inputTextView);
 
         rgOption.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
                 for(Pair<Schema, String> item : listCondition) {
                     if(item.second.equals(String.valueOf(checkedId))) {
-                        onItemSelected.onSelectedItem(item.first, item.second);
+//                        onItemSelected.onSelectedItem(item.first, item.second);
+                        setCheckedId(checkedId);
+                        inputTextView.setTitle(item.first);
+                        inputTextView.setVisibility(VISIBLE);
+                        schemaData = item.first;
                     }
                 }
             }
@@ -74,9 +85,9 @@ public class RadioButtonView extends LinearLayout {
             RadioButton radioButton = new RadioButton(getContext());
             radioButton.setId(Integer.parseInt(myValue.getValue()));
             radioButton.setText(myValue.getLabel());
-            if (values.equals(myValue.getValue())) {
-                radioButton.setChecked(true);
-            }
+//            if (values.equals(myValue.getValue())) {
+//                radioButton.setChecked(true);
+//            }
 
             rgOption.addView(radioButton);
         }
@@ -105,8 +116,28 @@ public class RadioButtonView extends LinearLayout {
             }
         }
     }
+    public int getCheckedId() {
+        return checkedId;
+    }
+
+    public void setCheckedId(int checkedId) {
+        this.checkedId = checkedId;
+    }
 
     public interface OnItemSelected {
         void onSelectedItem(Schema view, String value);
+    }
+
+    public String getValueInput(){
+        // checked
+        if (inputTextView != null && inputTextView.getVisibility() != GONE){
+            return inputTextView.getInputValue();
+        }
+        // chua check
+        return null;
+    }
+
+    public Schema getSchemaData() {
+        return schemaData;
     }
 }

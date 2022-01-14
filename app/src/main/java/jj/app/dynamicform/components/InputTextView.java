@@ -39,7 +39,11 @@ public class InputTextView extends LinearLayout {
     }
 
 
-    public void setData(Schema view) {
+    public void setTitle(Schema view) {
         txtTitle.setText(view.getLabel());
+    }
+
+    public String getInputValue(){
+        return edtInput.getText().toString();
     }
 }
