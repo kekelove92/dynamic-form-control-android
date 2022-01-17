@@ -14,5 +14,6 @@ public class Constants {
     public static final String text = "text";
     public static final String form_control = "form-control";
     public static final String textarea = "textarea";
+    public static final String date = "date";
 
 }

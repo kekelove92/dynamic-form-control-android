@@ -1,11 +1,15 @@
 package jj.app.dynamicform;
 
 import android.annotation.SuppressLint;
+import android.app.DatePickerDialog;
+import android.app.Dialog;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
@@ -13,8 +17,11 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.DialogFragment;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -27,10 +34,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
 
+import jj.app.dynamicform.components.DateTextView;
 import jj.app.dynamicform.components.InputTextView;
 import jj.app.dynamicform.components.RadioButtonView;
 import jj.app.dynamicform.models.Constants;
@@ -104,8 +114,27 @@ public class DemoActivity extends AppCompatActivity implements View.OnClickListe
 
                     break;
 
+                case Constants.date:
+                    addDate(data);
+                    break;
             }
         }
+    }
+
+    private void addDate(Schema data) {
+        final DateTextView dateTextView = new DateTextView(this);
+        dateTextView.setTitle(data);
+        dateTextView.setTag(data.getName());
+        dateTextView.setFocusable(false);
+        dateTextView.setClickable(true);
+        dateTextView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                DialogFragment newFragment = new MyDatePickerDialog(dateTextView);
+                newFragment.show(getSupportFragmentManager(), "date_picker");
+            }
+        });
+        llMain.addView(dateTextView);
     }
 
     private void addText(Schema schema) {
@@ -176,10 +205,35 @@ public class DemoActivity extends AppCompatActivity implements View.OnClickListe
     public void addTextArea(Schema schema) {
         addCaption(schema.getLabel());
         EditText editText = new EditText(this);
+        editText.setTag(schema.getName());
         editText.setHint("Enter Value");
         editText.setMaxLines(5);
         editText.setLayoutParams(getLayoutParam());
         llMain.addView(editText);
+    }
+    public static class MyDatePickerDialog extends DialogFragment implements DatePickerDialog.OnDateSetListener {
+
+        DateTextView dateTextView;
+
+        public MyDatePickerDialog(DateTextView dateTextView) {
+            this.dateTextView = dateTextView;
+        }
+
+        @NonNull
+        @Override
+        public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+            Calendar calendar = Calendar.getInstance();
+            int year = calendar.get(Calendar.YEAR);
+            int month = calendar.get(Calendar.MONTH);
+            int day = calendar.get(Calendar.DAY_OF_MONTH);
+            return new DatePickerDialog(getContext(), this, year, month, day);
+        }
+
+        @Override
+        public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
+            String date = MessageFormat.format("{0}/{1}/{2}", String.valueOf(dayOfMonth), String.valueOf(month + 1), String.valueOf(year));
+            dateTextView.setValue(date);
+        }
     }
 
     private LinearLayout.LayoutParams getLayoutParam() {
@@ -233,6 +287,18 @@ public class DemoActivity extends AppCompatActivity implements View.OnClickListe
             for (int i = 0; i < myControlList.size(); i++) {
                 Schema schema = myControlList.get(i);
                 switch (schema.getType()) {
+                    case Constants.date:
+                        DateTextView dateTextView = llMain.findViewWithTag(schema.getName());
+                        String value = dateTextView.getInputValue();
+                        if (schema.getRequired() && TextUtils.isEmpty(value)){
+                            Toast.makeText(this, "date need fill", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        List<String> stringValueDate = new ArrayList<>();
+                        stringValueDate.add(value);
+                        myForm.getFormData().getSchemas().get(i).setUserData(stringValueDate);
+                        break;
+
                     case Constants.radio_group:
                         RadioButtonView radioButtonView = llMain.findViewWithTag(schema.getName());
                         if (radioButtonView.getCheckedId() != -1 && radioButtonView.getValueInput() == null) {
@@ -257,8 +323,22 @@ public class DemoActivity extends AppCompatActivity implements View.OnClickListe
                         }
                         System.out.println("" +  myForm.toString());
                         break;
+
+                    case Constants.textarea:
+                        EditText editText = llMain.findViewWithTag(schema.getName());
+                        String valueEdittext = editText.getText().toString();
+                        if (schema.getRequired() && TextUtils.isEmpty(valueEdittext)){
+                            Toast.makeText(this, "Fill data", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        List<String> stringValueEdite = new ArrayList<>();
+                        stringValueEdite.add(valueEdittext);
+                        myForm.getFormData().getSchemas().get(i).setUserData(stringValueEdite);
+                        break;
                 }
             }
         }
+
+        Log.d("",myForm.toString());
     }
 }
